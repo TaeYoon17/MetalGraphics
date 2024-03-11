@@ -15,7 +15,6 @@ final class Renderer:NSObject,MTKViewDelegate{
     let pipelineState: MTLRenderPipelineState!
     var vertexBuffer: MTLBuffer
     var vetices: [Vertex]!
-//    var imageTexture:
     init(view:MainView) {
         self.view = view
         if let device = MTLCreateSystemDefaultDevice(){
@@ -32,15 +31,12 @@ final class Renderer:NSObject,MTKViewDelegate{
         }catch{
             fatalError("Don't made pipelineState")
         }
-        
         self.vetices = getRGBValues()!
         // 하나의 도형을 만든 버퍼
         vertexBuffer = device.makeBuffer(bytes: vetices, length: vetices.count * MemoryLayout<Vertex>.stride,options: [])!
         super.init()
     }
-    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        
-    }
+    func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) { }
     func draw(in view: MTKView) {
         guard let drawable = view.currentDrawable else { return }
         let commandBuffer:MTLCommandBuffer? = metalCommandQueue.makeCommandBuffer()

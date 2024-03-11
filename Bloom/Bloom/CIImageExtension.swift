@@ -15,16 +15,25 @@ extension CIImage{
             return nil
         }
         let ciImage = CIImage(contentsOf: imageURL, options: nil)
-        guard let cgImage = ciImage?.cgImage else {return nil}
+        guard let cgImage:CGImage = ciImage?.cgImage else {return nil}
         let width = cgImage.width
         let height = cgImage.height
-        let bitsPerComponent = 8
-        let bytesPerPixel = 4
+        let bitsPerComponent = 8 // 256 depth
+        let bytesPerPixel = 4 // r,g,b,a
         let bytesPerRow = width * bytesPerPixel
+        // 이미지 데이터를 그대로 읽어들인다. -> C 언어적인 요소가 들어가 있음
         let imageData = UnsafeMutableRawPointer.allocate(byteCount: width * height * bytesPerPixel, alignment: bytesPerPixel)
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        let bitmapInfo: UInt32 = CGImageAlphaInfo.noneSkipLast.rawValue
-        guard let context = CGContext(data: imageData, width: width, height: height, bitsPerComponent: bitsPerComponent, bytesPerRow: bytesPerRow, space: colorSpace, bitmapInfo: bitmapInfo) else {
+        let colorSpace: CGColorSpace = CGColorSpaceCreateDeviceRGB()
+//  장치 종속적 색 공간의 색은 출력 장치에 표시될 때 변형되거나 다른 방식으로 수정되지 않으므로 색의 시각적 모양을 유지하려고 시도하지 않습니다.
+//  따라서 장치 색 공간의 색상이 다른 출력 장치에 표시될 때 다르게 나타나는 경우가 많습니다. 이러한 이유로 색 보존이 중요한 경우에는 디바이스 색 공간을 사용하지 않는 것이 좋습니다.
+        let bitmapInfo: UInt32 = CGImageAlphaInfo.noneSkipLast.rawValue // CGContext는 Enum의 RawValue(Int Type)으로 구분한다.
+        guard let context = CGContext(data: imageData,
+                                      width: width,
+                                      height: height,
+                                      bitsPerComponent: bitsPerComponent,
+                                      bytesPerRow: bytesPerRow,
+                                      space: colorSpace,
+                                      bitmapInfo: bitmapInfo) else {
             return nil
         }
         context.draw(cgImage, in: CGRect(x: 0, y: 0, width: width, height: height))
@@ -33,7 +42,7 @@ extension CIImage{
         let texture = device.makeTexture(descriptor: textureDescriptor)
         let region = MTLRegionMake2D(0, 0, width, height)
         texture?.replace(region: region, mipmapLevel: 0, withBytes: imageData, bytesPerRow: bytesPerRow)
-        
+        // 데이터 할당을 해제한다.
         imageData.deallocate()
         return texture
     }
@@ -45,17 +54,17 @@ func getRGBValues() -> [Vertex]? {
     }
     guard let ciImage = CIImage(contentsOf: imageURL, options: nil) else {return nil}
     let ciContext = CIContext(options: nil)
-    guard let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else {
+    guard let cgImage:CGImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else {
         return nil
     }
     
     let width = Int(ciImage.extent.width)
     let height = Int(ciImage.extent.height)
-    guard let data = cgImage.dataProvider?.data else {
+    guard let data:CFData = cgImage.dataProvider?.data else {
         return nil
     }
     
-    let pointer = CFDataGetBytePtr(data)
+    let pointer = CFDataGetBytePtr(data) // CFData를 포인터로 가져오는 작업
     let bytesPerPixel = 4
     let bytesPerRow = cgImage.bytesPerRow
     var vetecies:[Vertex] = []
@@ -66,7 +75,12 @@ func getRGBValues() -> [Vertex]? {
             let red = Float(pointer![pixelInfo]) / 255.0
             let green = Float(pointer![pixelInfo + 1]) / 255.0
             let blue = Float(pointer![pixelInfo + 2]) / 255.0
-            vetecies.append(Vertex(position: .init(x: -2*(Float(x) / Float(width) - 0.5), y: -2*(Float(y) / Float(height) - 0.5)), color: [red,green,blue,1]))
+            // 이미지 Coordinates to Metal Coordinates
+            // 원본 이미지의 Row 배열이 [1,2,3,4,5]라면 현제 Vertex에 담긴 배열은 [5,4,3,2,1]이 된다.
+            // 메탈은 하나의 Row를 동시에 읽기 때문에 y좌표만 반대로 바꾸어서() 2차원 배열에 담는다.
+            vetecies.append(Vertex(position: .init(x: 2*(Float(x) / Float(width) - 0.5),
+                                                   y: -2*(Float(y) / Float(height) - 0.5)),
+                                   color: [red,green,blue,1]))
         }
     }
     let startTime = DispatchTime.now()
@@ -90,7 +104,9 @@ func makeBlurX(width:Int,height:Int,vertices: [Vertex]) -> [Vertex]{
     var temp:[Vertex] = []
     for y in 0..<height {
         for x in 0..<width {
-            var ve = Vertex(position: .init(x: -2*(Float(x) / Float(width) - 0.5), y: -2*(Float(y) / Float(height) - 0.5)), color: .zero)
+            var ve = Vertex(position: .init(x: -2*(Float(x) / Float(width) - 0.5),
+                                            y: -2*(Float(y) / Float(height) - 0.5)),
+                            color: .zero)
             var i:Int = 0
             var colorSimd = SIMD4<Float>()
             for var nx in (x-2 ... x+2){
@@ -105,7 +121,6 @@ func makeBlurX(width:Int,height:Int,vertices: [Vertex]) -> [Vertex]{
     }
     return temp
 }
-
 func makeBlurY(width:Int,height:Int,vertices: [Vertex]) -> [Vertex]{
     var temp:[Vertex] = []
     for y in 0..<height{
