@@ -104,8 +104,7 @@ func makeBlurX(width:Int,height:Int,vertices: [Vertex]) -> [Vertex]{
     var temp:[Vertex] = []
     for y in 0..<height {
         for x in 0..<width {
-            var ve = Vertex(position: .init(x: -2*(Float(x) / Float(width) - 0.5),
-                                            y: -2*(Float(y) / Float(height) - 0.5)),
+            var ve = Vertex(position: .init(x: -2*(Float(x) / Float(width) - 0.5),y: -2*(Float(y) / Float(height) - 0.5)),
                             color: .zero)
             var i:Int = 0
             var colorSimd = SIMD4<Float>()
