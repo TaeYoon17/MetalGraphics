@@ -16,7 +16,7 @@ final class Raytracer{
         self.width = width
         self.height = height
        let sphere = Sphere(center: .init(0.4, -0.4, 0.5), radius: 0.4, color: .init(0,1,0))
-        let triangle = Triangle(v0: .init(-0.2, -0.2, 0.2), v1: .init(-0.2, 0.2, 0.2), v2: .init(0.2, 0.2, 0.2), color: .init(1, 0, 0))
+        let triangle = Triangle(v0: .init(-0.3, -0.3, 0.2), v1: .init(-0.3, 0.3, 0.2), v2: .init(0.3, 0.3, 0.2), color: .init(1, 0, 0))
         objes.append(sphere)
         objes.append(triangle)
     }
@@ -49,7 +49,7 @@ fileprivate extension Raytracer{
             return .init(0, 0, 1)
         }else{
             print(hit.d)
-            return color - (color * hit.d)
+            return color - (hit.obje?.color ?? .init(0, 0, 0) * hit.d)
         }
     }
     func findClosestCollision(ray:inout Ray,color: inout vector_float3) -> Hit{
