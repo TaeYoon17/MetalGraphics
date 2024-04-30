@@ -16,11 +16,20 @@ final class Raytracer{
     init(width: Int, height: Int) {
         self.width = width
         self.height = height
-        let oneSphere = Sphere(center: .init(0, 0, 0.4), radius: 0.4, phongMat: PhongMaterial(amb: .init(0, 0, 1), diff: .init(0, 0, 1), spec: .init(1, 1, 1))
-                               ,alpha: 6
-                               ,ks:0.8
+        let oneSphere = Sphere(center: .init(0, 0, 0.4),
+                               radius: 0.4,
+                               color: .init(1, 1, 0),
+                               phongMat: PhongMaterial(amb: .init(0, 0.2, 1),diff: .init(0, 0, 1),spec: .init(0, 1, 1)),
+                               alpha: 6,
+                               ks:1
         )
-        let twoSphere = Sphere(center: .init(0.2,0.2,0.6), radius: 0.4,phongMat: PhongMaterial(amb: .init(1, 0, 0), diff: .init(x: 0, y: 1, z: 0), spec: .init(0.4, 1, 0)),alpha: 2,ks:0.4)
+        let twoSphere = Sphere(center: .init(0.2,0.2,0.6),
+                               radius: 0.4,
+                               color: .init(0, 1, 0),
+                               phongMat: PhongMaterial(amb: .init(1, 0, 0), diff: .init(x: 0, y: 1, z: 0),spec: .init(0.4, 1, 0)),
+                               alpha: 2,
+                               ks:0.4
+        )
         objs.append(oneSphere)
         objs.append(twoSphere)
     }

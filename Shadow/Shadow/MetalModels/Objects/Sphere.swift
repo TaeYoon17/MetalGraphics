@@ -1,22 +1,20 @@
 //
-//  Circle.swift
-//  PerspectiveProjection
+//  Sphere.swift
+//  Shadow
 //
-//  Created by Developer on 4/21/24.
+//  Created by Developer on 4/25/24.
 //
 
 import Foundation
-import simd
-struct Sphere: Obj{
+struct Sphere:ObjProtocol,PhongAvailable{
     var center: vector_float3
     var radius: Float32
-    var color: vector_float3
-    var phongMat: PhongMaterial = .init(amb: .zero, diff: .zero, spec: .zero)
-    var alpha: Float32 = 0
-    var ks: Float32 = 0
+    var phongMat:PhongMaterial
+    var alpha: Float32
+    var ks: Float32
     func checkRayCollision(ray: inout Ray) -> Hit {
         let rayStart = ray.start
-        var hit = Hit(d: -1, point: .init(0,0,0), normal: .init(0, 0, 0))
+        var hit = Hit(d: -1, point: .zero, normal: .zero)
         
         let rayDir = ray.dir
         let b:Float32 = 2 * dot(rayDir, rayStart - self.center)
